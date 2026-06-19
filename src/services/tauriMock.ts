@@ -365,13 +365,21 @@ function seedVirtualFileSystem() {
         {
           type: 'paragraph',
           content: [
-            { type: 'text', text: 'The Scriptorium is a full-featured rich-text editor based on TipTap. Here are some useful tips to get you writing:' }
+            { type: 'text', text: 'The Scriptorium is a full-featured writing environment built on TipTap. Here is a quick guide to help you get the most out of MIKI:' }
           ]
         },
         {
           type: 'heading',
           attrs: { level: 2 },
-          content: [{ type: 'text', text: 'Keyboard Shortcuts & Markdown Shortcuts' }]
+          content: [{ type: 'text', text: '1. Markdown Shortcuts' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'You can write naturally using standard markdown triggers. Try typing these on a new line followed by ' },
+            { type: 'text', attrs: { bold: true }, text: 'Space' },
+            { type: 'text', text: ':' }
+          ]
         },
         {
           type: 'bulletList',
@@ -382,8 +390,12 @@ function seedVirtualFileSystem() {
                 {
                   type: 'paragraph',
                   content: [
-                    { type: 'text', attrs: { bold: true }, text: '# ' },
-                    { type: 'text', text: 'followed by Space creates a Heading 1.' }
+                    { type: 'text', attrs: { code: true }, text: '# ' },
+                    { type: 'text', text: ', ' },
+                    { type: 'text', attrs: { code: true }, text: '## ' },
+                    { type: 'text', text: ', or ' },
+                    { type: 'text', attrs: { code: true }, text: '### ' },
+                    { type: 'text', text: ' to quickly format Headings.' }
                   ]
                 }
               ]
@@ -394,8 +406,10 @@ function seedVirtualFileSystem() {
                 {
                   type: 'paragraph',
                   content: [
-                    { type: 'text', attrs: { bold: true }, text: '## ' },
-                    { type: 'text', text: 'followed by Space creates a Heading 2.' }
+                    { type: 'text', attrs: { code: true }, text: '- ' },
+                    { type: 'text', text: ' or ' },
+                    { type: 'text', attrs: { code: true }, text: '* ' },
+                    { type: 'text', text: ' to start a bullet list.' }
                   ]
                 }
               ]
@@ -406,8 +420,32 @@ function seedVirtualFileSystem() {
                 {
                   type: 'paragraph',
                   content: [
-                    { type: 'text', attrs: { bold: true }, text: '- ' },
-                    { type: 'text', text: 'followed by Space creates a bullet list.' }
+                    { type: 'text', attrs: { code: true }, text: '1. ' },
+                    { type: 'text', text: ' to start a numbered list.' }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'listItem',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    { type: 'text', attrs: { code: true }, text: '> ' },
+                    { type: 'text', text: ' to create a blockquote.' }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'listItem',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    { type: 'text', attrs: { code: true }, text: '--- ' },
+                    { type: 'text', text: ' (three dashes) to insert a horizontal divider.' }
                   ]
                 }
               ]
@@ -417,12 +455,98 @@ function seedVirtualFileSystem() {
         {
           type: 'heading',
           attrs: { level: 2 },
-          content: [{ type: 'text', text: 'Right Panel: Attributes Table' }]
+          content: [{ type: 'text', text: '2. Slash Menu (/) & Callouts' }]
         },
         {
           type: 'paragraph',
           content: [
-            { type: 'text', text: 'Use the right collapsible panel to manage metadata (attributes) for each page. Attributes are key-value pairs that help catalog your worldbuilding.' }
+            { type: 'text', text: 'Press the ' },
+            { type: 'text', attrs: { code: true }, text: '/' },
+            { type: 'text', text: ' key on a new line to summon the ' },
+            { type: 'text', attrs: { bold: true }, text: 'Slash Commands' },
+            { type: 'text', text: ' menu. From here, you can insert rich media like code blocks, custom images, and ' },
+            { type: 'text', attrs: { bold: true }, text: 'Callout Boxes' },
+            { type: 'text', text: '.' }
+          ]
+        },
+        {
+          type: 'callout',
+          attrs: { type: 'info', emoji: '💡' },
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'This is a Callout Box! Use them to highlight crucial worldbuilding secrets, alerts, or summaries in your pages.' }
+              ]
+            }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '3. Internal Wiki Linking' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'MIKI operates like a web of knowledge. Type ' },
+            { type: 'text', attrs: { code: true }, text: '[[' },
+            { type: 'text', text: ' anywhere inside your paragraph to search and link directly to another page or folder. Try clicking this linked reference to go back to the ' },
+            {
+              type: 'text',
+              text: 'Welcome to MIKI',
+              marks: [
+                {
+                  type: 'internalLink',
+                  attrs: {
+                    targetId: welcomePageId,
+                    targetKind: 'page',
+                    targetName: 'Welcome to MIKI'
+                  }
+                }
+              ]
+            },
+            { type: 'text', text: ' page!' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '4. Left & Right Panels' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Expand the side panels to leverage secondary features:' }
+          ]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    { type: 'text', attrs: { bold: true }, text: 'Left Panel (Table of Contents)' },
+                    { type: 'text', text: ': Instantly parses H1, H2, and H3 headings to build a clickable outline for quick navigation.' }
+                  ]
+                }
+              ]
+            },
+            {
+              type: 'listItem',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    { type: 'text', attrs: { bold: true }, text: 'Right Panel (Attributes Table)' },
+                    { type: 'text', text: ': Lets you add key-value metadata to structure your wiki (e.g., characters stats, location types, or document status tags).' }
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
