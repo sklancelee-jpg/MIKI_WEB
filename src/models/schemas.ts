@@ -1,5 +1,88 @@
 import { z } from 'zod'
 
+// ── Runtime schemas — match actual camelCase JSON on disk ────────────────────
+// These validate data at every read boundary in persistence.ts.
+
+const AttributeRuntimeSchema = z.object({
+  id:    z.string().uuid(),
+  label: z.string(),
+  value: z.string(),
+})
+
+const PageStyleRuntimeSchema = z.object({
+  borderColor:  z.string(),
+  borderWidth:  z.number(),
+  borderStyle:  z.enum(['solid', 'dashed', 'dotted', 'double', 'none']),
+  borderRadius: z.number(),
+})
+
+const PinRuntimeSchema = z.object({
+  id:       z.string().uuid(),
+  label:    z.string(),
+  x:        z.number(),
+  y:        z.number(),
+  targetId: z.string(),
+  colorHex: z.string(),
+})
+
+const TextBoxRuntimeSchema = z.object({
+  id:         z.string().uuid(),
+  text:       z.string(),
+  x:          z.number(),
+  y:          z.number(),
+  width:      z.number(),
+  height:     z.number(),
+  fontFamily: z.string(),
+  fontSize:   z.number(),
+  bold:       z.boolean(),
+  italic:     z.boolean(),
+  underline:  z.boolean(),
+  colorHex:   z.string(),
+})
+
+const AtlasDataRuntimeSchema = z.object({
+  imagePath: z.string(),
+  pins:      z.array(PinRuntimeSchema).default([]),
+  textBoxes: z.array(TextBoxRuntimeSchema).optional(),
+})
+
+export const WikiRuntimeSchema = z.object({
+  id:         z.string().uuid(),
+  name:       z.string().min(1),
+  colorHex:   z.string(),
+  rootPath:   z.string(),
+  createdAt:  z.string(),
+  coverImage: z.string().nullable().optional(),
+  coverZoom:  z.number().optional(),
+  coverPanX:  z.number().optional(),
+  coverPanY:  z.number().optional(),
+})
+
+export const DirEntryRuntimeSchema = z.object({
+  id:         z.string().uuid(),
+  kind:       z.enum(['folder', 'page', 'atlas']),
+  name:       z.string(),
+  colorHex:   z.string(),
+  parentId:   z.string(),
+  osPath:     z.string(),
+  createdAt:  z.string(),
+  updatedAt:  z.string(),
+  coverImage: z.string().nullable().optional(),
+  coverZoom:  z.number().optional(),
+  coverPanX:  z.number().optional(),
+  coverPanY:  z.number().optional(),
+})
+
+export const PageFileRuntimeSchema = z.object({
+  content:    z.any().nullable(),
+  attributes: z.array(AttributeRuntimeSchema).default([]),
+  coverImage: z.string().nullable().optional(),
+  pageStyle:  PageStyleRuntimeSchema.optional(),
+  atlasData:  AtlasDataRuntimeSchema.optional(),
+})
+
+// ── Spec schemas — planned document format (snake_case, for reference) ───────
+
 // Canvas styling schema
 export const MikiCanvasStylingSchema = z.object({
   background: z.object({

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIKI — Gummy Glass UI Mockup</title>
+<style>
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS  (mirrors MIKI tokens.ts / global.css)
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --color-canvas:     #0c0e12;
+  --color-text:       #eef1f6;
+  --color-text-muted: rgba(210, 215, 226, 0.45);
+  --color-accent:     #a8b0c0;
+  --color-indigo:     #6366f1;
+
+  /* Glass recipe */
+  --glass-bg:         rgba(13, 15, 20, 0.58);
+  --glass-blur:       blur(44px) saturate(2.0) brightness(1.08);
+  --glass-border:     0.5px solid rgba(255, 255, 255, 0.11);
+  --glass-sheen:      linear-gradient(175deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 52%);
+  --glass-inner-edge: inset 1px 1px 0 rgba(255,255,255,0.18), inset -0.5px -0.5px 0 rgba(0,0,0,0.18);
+  --glass-shadow:
+    0 3px 8px  rgba(0,0,0,0.40),
+    0 10px 32px rgba(0,0,0,0.28),
+    0 36px 80px -20px rgba(0,0,0,0.32);
+
+  /* Spring easing */
+  --spring:  cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --spring-tight: cubic-bezier(0.175, 0.885, 0.32, 1.6);
+  --smooth:  cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CANVAS BASE
+   ═══════════════════════════════════════════════════════════════ */
+html, body {
+  width: 100%; height: 100vh;
+  overflow: hidden;
+  background: var(--color-canvas);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Very subtle vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse 140% 120% at 50% 50%,
+    transparent 40%,
+    rgba(0,0,0,0.35) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE SHEET  (the canvas / scriptorium)
+   ═══════════════════════════════════════════════════════════════ */
+.page-sheet-wrapper {
+  position: fixed; inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.page-sheet {
+  background: #ffffff;
+  width: min(680px, calc(100vw - 156px));
+  max-height: calc(100vh - 84px);
+  border-radius: 3px;
+  padding: 56px 68px 64px;
+  overflow: hidden;
+  color: #1c1e2e;
+  box-shadow:
+    0 1px 2px  rgba(0,0,0,0.06),
+    0 4px 12px rgba(0,0,0,0.10),
+    0 16px 40px rgba(0,0,0,0.18),
+    0 48px 96px -24px rgba(0,0,0,0.30),
+    0 80px 140px -40px rgba(0,0,0,0.22);
+  animation: sheetRise 0.65s var(--smooth) 0.0s both;
+}
+
+@keyframes sheetRise {
+  from { opacity: 0; transform: scale(0.97) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.page-sheet__title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #0f1117;
+  margin-bottom: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+}
+
+.page-sheet__h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1e2e;
+  margin-top: 26px;
+  margin-bottom: 7px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  letter-spacing: -0.2px;
+}
+
+.page-sheet__body {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: #2d3148;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  margin-bottom: 12px;
+}
+
+.page-sheet__body em { font-style: italic; }
+
+.cursor {
+  display: inline-block;
+  width: 2px; height: 17px;
+  background: var(--color-indigo);
+  border-radius: 1px;
+  animation: blink 0.95s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 1px;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLASS PILL — base class
+   ═══════════════════════════════════════════════════════════════ */
+.pill {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 999px;
+  border: var(--glass-border);
+  box-shadow: var(--glass-inner-edge), var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top gloss sheen */
+.pill::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  background: var(--glass-sheen);
+  border-radius: 999px 999px 0 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Specular reflection dot */
+.pill::after {
+  content: '';
+  position: absolute;
+  top: 6px; left: 14px;
+  width: 26px; height: 6px;
+  background: radial-gradient(ellipse at center,
+    rgba(255,255,255,0.22) 0%, transparent 100%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PILL ENTRANCE ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes pillPop {
+  0%   { opacity: 0; transform: scale(0.70) translateY(-6px); }
+  55%  { opacity: 1; transform: scale(1.035) translateY(1px); }
+  75%  { transform: scale(0.985) translateY(-0.5px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes panelPopLeft {
+  0%   { opacity: 0; transform: translateX(-18px) scale(0.92, 0.88); }
+  55%  { opacity: 1; transform: translateX(3px)   scale(1.02, 1.02); }
+  78%  { transform: translateX(-1px) scale(0.995, 0.995); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes panelPopRight {
+  0%   { opacity: 0; transform: translateX(18px)  scale(0.92, 0.88); }
+  55%  { opacity: 1; transform: translateX(-3px)  scale(1.02, 1.02); }
+  78%  { transform: translateX(1px)  scale(0.995, 0.995); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FLOATING UI LAYER
+   ═══════════════════════════════════════════════════════════════ */
+.floating-ui {
+  position: fixed; inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.floating-ui > * { pointer-events: all; }
+
+/* ── FULL-WIDTH TOOLBAR PILL ───────────────────────────── */
+.pill--toolbar {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  right: 13px;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 8px;
+  animation: pillPop 0.52s var(--spring) 0.06s both;
+}
+
+/* Left / center / right zones within the toolbar */
+.toolbar-left   { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+.toolbar-center { display: flex; align-items: center; gap: 0; flex: 1; justify-content: center; }
+.toolbar-right  { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+
+/* ── SIDE PANELS (full glass panels, not blobs) ─────────── */
+.glass-panel {
+  position: absolute;
+  top: 70px;
+  bottom: 54px;
+  width: 242px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Override pill sheen radius for panels */
+.glass-panel.pill::before { border-radius: 20px 20px 0 0; }
+.glass-panel.pill::after  { left: 16px; }
+
+.glass-panel--left {
+  left: 13px;
+  animation: panelPopLeft 0.60s var(--spring) 0.20s both;
+}
+
+.glass-panel--right {
+  right: 13px;
+  width: 260px;
+  animation: panelPopRight 0.60s var(--spring) 0.26s both;
+}
+
+/* Panel header row */
+.gpanel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px 10px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.gpanel__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(210, 215, 226, 0.40);
+}
+
+.gpanel__toggle {
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(210, 215, 226, 0.45);
+  cursor: pointer; border: none; background: transparent;
+  transition: color 0.14s, background 0.14s, transform 0.30s var(--spring-tight);
+}
+.gpanel__toggle:hover {
+  color: var(--color-text);
+  background: rgba(255,255,255,0.10);
+  transform: scale(1.14);
+}
+
+.gpanel__rule {
+  height: 0.5px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+
+/* Scrollable body */
+.gpanel__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px 12px;
+  position: relative;
+  z-index: 1;
+  scrollbar-width: none;
+}
+.gpanel__body::-webkit-scrollbar { display: none; }
+
+/* ── ToC rows ───────────────────────────────────────────── */
+.toc-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 7px;
+  margin-bottom: 1px;
+  transition: background 0.14s;
+}
+.toc-row:hover { background: rgba(255,255,255,0.06); }
+
+.toc-chevron {
+  width: 20px; height: 22px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(210,215,226,0.35);
+  cursor: pointer; border: none; background: transparent;
+  transition: color 0.14s, transform 0.20s var(--smooth);
+}
+.toc-chevron:hover { color: rgba(210,215,226,0.70); }
+
+.toc-spacer { width: 20px; flex-shrink: 0; }
+
+.toc-link {
+  flex: 1;
+  text-align: left;
+  padding: 4px 4px 4px 2px;
+  border: none; background: transparent; cursor: pointer;
+  transition: color 0.14s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toc-link--h1 {
+  font-size: 12px; font-weight: 600;
+  color: rgba(210,215,226,0.85);
+}
+.toc-link--h2 {
+  font-size: 11.5px; font-weight: 500;
+  color: rgba(210,215,226,0.65);
+}
+.toc-link--h3 {
+  font-size: 11px; font-weight: 400;
+  color: rgba(210,215,226,0.42);
+}
+.toc-link:hover { color: var(--color-text) !important; }
+
+/* ── Attr table ─────────────────────────────────────────── */
+.cover-slot {
+  margin: 0 12px 10px;
+  height: 72px;
+  border-radius: 12px;
+  border: 0.5px dashed rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(210,215,226,0.28);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.14s, color 0.14s, background 0.14s;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.cover-slot:hover {
+  border-color: rgba(255,255,255,0.28);
+  color: rgba(210,215,226,0.60);
+  background: rgba(255,255,255,0.03);
+}
+
+.attr-tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+.attr-tbl tr { border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+.attr-tbl tr:last-child { border-bottom: none; }
+.attr-tbl td {
+  padding: 5px 4px;
+  font-size: 11.5px;
+  vertical-align: top;
+}
+.attr-tbl td:first-child {
+  width: 42%;
+  color: rgba(210,215,226,0.40);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.attr-tbl td:last-child {
+  color: rgba(210,215,226,0.82);
+}
+
+.attr-add {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 4px;
+  text-align: left;
+  font-size: 11.5px;
+  color: rgba(210,215,226,0.30);
+  cursor: pointer;
+  border: none; background: transparent;
+  border-radius: 7px;
+  transition: color 0.14s, background 0.14s;
+}
+.attr-add:hover { color: rgba(210,215,226,0.70); background: rgba(255,255,255,0.05); }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOOL BUTTONS
+   ═══════════════════════════════════════════════════════════════ */
+.tool-btn {
+  position: relative;
+  z-index: 1;
+  min-width: 32px;
+  height: 31px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition:
+    color    0.14s ease,
+    background 0.14s ease,
+    transform  0.32s var(--spring-tight);
+  flex-shrink: 0;
+  padding: 0 8px;
+}
+
+.tool-btn svg { flex-shrink: 0; }
+
+.tool-btn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.11);
+  transform: scale(1.16);
+  transition:
+    color    0.10s ease,
+    background 0.10s ease,
+    transform  0.32s var(--spring-tight);
+}
+
+.tool-btn:active {
+  transform: scale(0.88) !important;
+  transition: transform 0.08s ease !important;
+}
+
+.tool-btn--active {
+  color: var(--color-text) !important;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.tool-btn--wide { padding: 0 10px; }
+
+/* Panel btns are slightly larger */
+.panel-pill .tool-btn {
+  width: 36px;
+  height: 34px;
+  border-radius: 10px;
+  padding: 0;
+}
+
+/* Dividers */
+.divider {
+  width: 0.5px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.10);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.divider--h {
+  width: 28px;
+  height: 0.5px;
+  background: rgba(255, 255, 255, 0.10);
+  margin: 4px 0;
+}
+
+/* Section labels */
+.section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: rgba(210, 215, 226, 0.25);
+  text-align: center;
+  margin: 2px 0;
+  padding: 0 6px;
+}
+
+/* ── ToC skeleton bars ─────── */
+.toc-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.13);
+  transition: background 0.18s ease, transform 0.28s var(--spring);
+  cursor: pointer;
+  align-self: stretch;
+  margin: 0 7px;
+}
+.toc-bar:hover { background: rgba(168,176,192,0.45); transform: scaleX(1.06); }
+.toc-bar--h1 { background: rgba(255,255,255,0.22); }
+.toc-bar--h2 { margin-left: 11px; }
+.toc-bar--h3 { margin-left: 14px; background: rgba(255,255,255,0.09); }
+
+/* ── Attr skeleton bars ─────── */
+.attr-key {
+  height: 4px; width: 36px;
+  border-radius: 2px;
+  background: rgba(99,102,241,0.40);
+  margin: 3px 0 1px;
+}
+.attr-val {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.10);
+  margin: 0 0 1px;
+}
+
+/* ── Image placeholder ────── */
+.img-placeholder {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Color wheel dot ──────── */
+.color-dot {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: conic-gradient(
+    hsl(0,80%,65%), hsl(50,80%,62%), hsl(110,70%,55%),
+    hsl(175,75%,52%), hsl(230,70%,65%), hsl(290,70%,62%), hsl(360,80%,65%)
+  );
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.20), 0 1px 4px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+/* ── Font label ───────────── */
+.font-name  { font-size: 11px; color: rgba(210,215,226,0.60); white-space: nowrap; }
+.size-num   { font-size: 12px; font-weight: 600; color: rgba(210,215,226,0.65); }
+.fmt-letter { font-size: 13.5px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ANNOTATION LAYER
+   ═══════════════════════════════════════════════════════════════ */
+.annotations {
+  position: fixed; inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.ann-tag {
+  position: absolute;
+  background: rgba(99,102,241,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.95);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+
+.ann-line {
+  position: absolute;
+  width: 0.5px;
+  background: rgba(99,102,241,0.50);
+  transform-origin: top center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOTTOM CONTROLS
+   ═══════════════════════════════════════════════════════════════ */
+.bottom-bar {
+  position: fixed;
+  bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+  animation: pillPop 0.52s var(--spring) 0.32s both;
+}
+
+.btn-pill {
+  background: rgba(14,16,21,0.72);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  border: 0.5px solid rgba(255,255,255,0.10);
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: rgba(210,215,226,0.65);
+  font-size: 11.5px;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.09), 0 4px 16px rgba(0,0,0,0.40);
+  transition: color 0.14s, background 0.14s, transform 0.30s var(--spring);
+  white-space: nowrap;
+}
+.btn-pill:hover {
+  color: var(--color-text);
+  background: rgba(20,22,30,0.88);
+  transform: scale(1.05);
+}
+.btn-pill--active {
+  color: rgba(255,255,255,0.90);
+  background: rgba(20,22,30,0.88);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WATERMARK
+   ═══════════════════════════════════════════════════════════════ */
+.watermark {
+  position: fixed;
+  bottom: 18px; right: 20px;
+  z-index: 30;
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(210,215,226,0.20);
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ PAGE SHEET ═══ -->
+<div class="page-sheet-wrapper">
+  <div class="page-sheet">
+    <div class="page-sheet__title">The Elder Dragons of Kaelthas</div>
+    <p class="page-sheet__body" style="margin-top:10px;">Long before the age of the Sundering, when the world was still warm with the breath of creation, the elder dragons carved their dominion from the living rock of the deep mountains…</p>
+    <div class="page-sheet__h2">Origins &amp; Lineage</div>
+    <p class="page-sheet__body">The first record of <em>Vaeltharion the Unmade</em> appears in the <em>Codex Primordius</em>, a fragmentary text discovered in the ruins of the Obsidian Library. Cross-referenced with the Draconic Annals, scholars place his emergence roughly 4,000 years before the current age.</p>
+    <div class="page-sheet__h2">Physical Description</div>
+    <p class="page-sheet__body">Vaeltharion's scales shift between deep obsidian and iridescent violet depending on ambient temperature. Each scale measures roughly 18 inches across at the dorsal ridge.<span class="cursor"></span></p>
+  </div>
+</div>
+
+<!-- ═══ FLOATING UI ═══ -->
+<div class="floating-ui">
+
+  <!-- ── Full-width Toolbar pill ── -->
+  <div class="pill pill--toolbar">
+
+    <!-- Left zone: Back + Search -->
+    <div class="toolbar-left">
+      <button class="tool-btn" title="Back">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path d="M9.5 3L4.5 7.5L9.5 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="divider"></div>
+      <button class="tool-btn tool-btn--wide" style="width:148px; justify-content:flex-start;">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="opacity:.5">
+          <circle cx="5.5" cy="5.5" r="3.8" stroke="currentColor" stroke-width="1.35"/>
+          <path d="M8.5 8.5L11.5 11.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+        </svg>
+        <span class="font-name">Search pages…</span>
+      </button>
+    </div>
+
+    <!-- Center zone: Formatting -->
+    <div class="toolbar-center">
+      <button class="tool-btn tool-btn--wide" style="width:88px;">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style="opacity:.65">
+          <path d="M2 11.5L6.2 2.5L10.5 11.5M3.5 8.5H9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="font-name">Georgia</span>
+      </button>
+      <div class="divider"></div>
+      <button class="tool-btn" style="width:38px;">
+        <span class="size-num">18</span>
+      </button>
+      <div class="divider"></div>
+      <button class="tool-btn tool-btn--active" style="font-weight:700;" title="Bold"><span class="fmt-letter">B</span></button>
+      <button class="tool-btn" style="font-style:italic;" title="Italic"><span class="fmt-letter">I</span></button>
+      <button class="tool-btn" style="text-decoration:underline;" title="Underline"><span class="fmt-letter">U</span></button>
+      <div class="divider"></div>
+      <button class="tool-btn" title="Text colour" style="width:34px;">
+        <div class="color-dot"></div>
+      </button>
+      <div class="divider"></div>
+      <button class="tool-btn" style="font-size:11px;font-weight:700;color:rgba(210,215,226,.75)">H1</button>
+      <button class="tool-btn" style="font-size:11px;color:rgba(210,215,226,.45)">H2</button>
+      <button class="tool-btn" style="font-size:11px;color:rgba(210,215,226,.35)">H3</button>
+    </div>
+
+    <!-- Right zone: Export + Edit/Preview -->
+    <div class="toolbar-right">
+      <button class="tool-btn" title="Export">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path d="M7.5 2V9.5M4.5 6.5L7.5 9.5L10.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12.5H13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="divider"></div>
+      <button class="tool-btn tool-btn--active" title="Edit mode">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="tool-btn" title="Preview mode">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <ellipse cx="7.5" cy="7.5" rx="5.5" ry="3.5" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="7.5" cy="7.5" r="1.6" fill="currentColor" opacity=".8"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── Left · ToC panel ── -->
+  <div class="pill glass-panel glass-panel--left">
+    <div class="gpanel__header">
+      <span class="gpanel__title">Contents</span>
+      <button class="gpanel__toggle" title="Collapse panel">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M7.5 6H1.5M3.5 4L1.5 6L3.5 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="gpanel__rule"></div>
+    <nav class="gpanel__body">
+      <!-- H1 with chevron -->
+      <div class="toc-row">
+        <button class="toc-chevron">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="toc-link toc-link--h1">The Elder Dragons of Kaelthas</button>
+      </div>
+      <!-- H2 with chevron -->
+      <div class="toc-row" style="padding-left:20px;">
+        <button class="toc-chevron">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="toc-link toc-link--h2">Origins &amp; Lineage</button>
+      </div>
+      <!-- H3 leaf -->
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Early written records</button>
+      </div>
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Cross-referencing the Annals</button>
+      </div>
+      <!-- H2 with chevron -->
+      <div class="toc-row" style="padding-left:20px;">
+        <button class="toc-chevron">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="toc-link toc-link--h2">Physical Description</button>
+      </div>
+      <!-- H3 leaves -->
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Scale composition</button>
+      </div>
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Wingspan &amp; flight</button>
+      </div>
+      <!-- H2 leaf -->
+      <div class="toc-row" style="padding-left:20px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h2">Territorial Range</button>
+      </div>
+      <!-- H2 with chevron -->
+      <div class="toc-row" style="padding-left:20px;">
+        <button class="toc-chevron">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 4L5 6.5L7.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="toc-link toc-link--h2">Known Specimens</button>
+      </div>
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Vaeltharion the Unmade</button>
+      </div>
+      <div class="toc-row" style="padding-left:40px;">
+        <span class="toc-spacer"></span>
+        <button class="toc-link toc-link--h3">Syrath the Pale</button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ── Right · Attributes panel ── -->
+  <div class="pill glass-panel glass-panel--right">
+    <div class="gpanel__header">
+      <button class="gpanel__toggle" title="Collapse panel">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M4.5 6H10.5M8.5 4L10.5 6L8.5 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="gpanel__title">Attributes</span>
+    </div>
+    <div class="gpanel__rule"></div>
+    <div class="gpanel__body">
+      <!-- Cover image slot -->
+      <div class="cover-slot">+ Reference image</div>
+      <div class="gpanel__rule" style="margin: 0 0 6px;"></div>
+      <!-- Attribute table -->
+      <table class="attr-tbl">
+        <tbody>
+          <tr><td>Species</td><td>Elder Dragon</td></tr>
+          <tr><td>Age</td><td>~4,000 yrs</td></tr>
+          <tr><td>Scale colour</td><td>Obsidian / Violet</td></tr>
+          <tr><td>Wingspan</td><td>340 ft</td></tr>
+          <tr><td>Status</td><td>Unmade</td></tr>
+          <tr><td>Origin</td><td>Kaelthas Deep Mountains</td></tr>
+          <tr><td>First record</td><td>Codex Primordius</td></tr>
+        </tbody>
+      </table>
+      <button class="attr-add">+ Add attribute</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ ANNOTATION LAYER ═══ -->
+<div class="annotations" id="annotations" style="display:none;">
+  <div class="ann-tag" style="top:65px; left:50%; transform:translateX(-50%);">Full-width Toolbar Pill · Back · Search · Font · B I U · Colour · H1-3 · Export · Edit/Preview</div>
+  <div class="ann-tag" style="top:50%; left:262px; transform:translateY(-50%);">ToC Panel · H1→H2→H3 + collapse arrows</div>
+  <div class="ann-tag" style="top:50%; right:270px; transform:translateY(-50%);">Attr Panel · Image + Key/Value + Add row</div>
+  <div class="ann-tag" style="bottom:78px; left:50%; transform:translateX(-50%); background:rgba(45,212,191,0.75);">
+    Canvas fully unobstructed — panels float above it at z-index 10
+  </div>
+</div>
+
+<!-- ═══ BOTTOM CONTROLS ═══ -->
+<div class="bottom-bar">
+  <button class="btn-pill btn-pill--active" onclick="toggleAnnotations(this)">◎ Annotations</button>
+  <button class="btn-pill" onclick="replayAnimations()">↺ Replay entrance</button>
+  <button class="btn-pill" onclick="toggleCanvas(this)">⬜ Light canvas</button>
+</div>
+
+<div class="watermark">MIKI · Gummy Glass UI Mockup</div>
+
+<script>
+  /* ── Annotation toggle ── */
+  function toggleAnnotations(btn) {
+    const ann = document.getElementById('annotations');
+    const visible = ann.style.display !== 'none';
+    ann.style.display = visible ? 'none' : 'block';
+    btn.classList.toggle('btn-pill--active', !visible);
+  }
+
+  /* ── Replay entrance animations ── */
+  function replayAnimations() {
+    const pills = document.querySelectorAll('.pill--nav, .pill--format, .pill--actions, .panel-pill--left, .panel-pill--right, .page-sheet');
+    pills.forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight; // force reflow
+      el.style.animation = '';
+    });
+  }
+
+  /* ── Toggle canvas lightness ── */
+  function toggleCanvas(btn) {
+    const body = document.body;
+    const isLight = body.style.background === 'rgb(232, 234, 240)';
+    body.style.background = isLight ? '' : '#e8eaf0';
+    document.querySelector('.page-sheet').style.boxShadow = isLight
+      ? '' : '0 1px 2px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.10), 0 16px 40px rgba(0,0,0,0.12)';
+    btn.classList.toggle('btn-pill--active', !isLight);
+  }
+
+  /* ── Elastic hover on every .tool-btn ── */
+  document.addEventListener('mousedown', e => {
+    if (e.target.closest('.tool-btn')) {
+      e.target.closest('.tool-btn').style.transition = 'transform 0.08s ease';
+    }
+  });
+
+  document.addEventListener('mouseup', e => {
+    const btn = e.target.closest('.tool-btn');
+    if (btn) {
+      btn.style.transition = '';
+    }
+  });
+</script>
+</body>
+</html>
